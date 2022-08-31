@@ -13,6 +13,27 @@
 const $ = (selector) => document.querySelector(selector);
 
 function App() {
+  // TODO 메뉴 수정
+  // - [✅] 메뉴의 수정 버튼을 눌러 메뉴 이름 수정할 수 있다.
+  // - [✅] 메뉴 수정시 브라우저에서 제공하는 `prompt` 인터페이스를 활용한다.
+  // - [✅] `prompt` 인터페이스에서 메뉴명 수정 후 확인 버튼 또는 엔터키 입력으로 수정된다.
+
+  // event 위임
+  $("#espresso-menu-list").addEventListener("click", (e) => {
+    if (e.target.classList.contains("menu-edit-button")) {
+      // closest라는 메서드를 이용해서 클릭한 수정버튼에 가장 가까운 li 태그를 찾음 +
+      // element 안의 text의 값을 가져오는 innerText 메서드 사용
+      // 반복 사용하는 코드 변수명 앞에 $붙이고 따로 만들어줘 훨씬 더 간결한 코드 작성.
+      const $menuName = e.target.closest("li").querySelector(".menu-name");
+      const editedMenuName = prompt(
+        "수정하고 싶은 메뉴 이름을 입력해주세요.",
+        $menuName.innerText
+      );
+      // 입력한 이름으로 수정 완료
+      $menuName.innerText = editedMenuName;
+    }
+  });
+
   // form태그가 자동으로 전송되는걸 막아준다.
   $("#espresso-menu-form").addEventListener("submit", (e) => {
     e.preventDefault();
@@ -65,11 +86,6 @@ function App() {
 }
 
 App();
-
-// TODO 메뉴 수정
-// - [ ] 메뉴의 수정 버튼을 눌러 메뉴 이름 수정할 수 있다.
-// - [ ] 메뉴 수정시 브라우저에서 제공하는 `prompt` 인터페이스를 활용한다.
-// - [ ] `prompt` 인터페이스에서 메뉴명 수정 후 확인 버튼 또는 엔터키 입력으로 수정된다.
 
 // TODO 메뉴 삭제
 // - [ ] 메뉴 삭제 버튼을 이용하여 메뉴 삭제할 수 있다.
