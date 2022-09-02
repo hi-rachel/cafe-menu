@@ -1,6 +1,6 @@
-// ## 🎯 step1 요구사항 - 돔 조작과 이벤트 핸들링으로 메뉴 관리하기
-
 // 요구사항 분석
+
+// ## 🎯 step1 요구사항 - 돔 조작과 이벤트 핸들링으로 메뉴 관리하기
 
 // TODO 메뉴 추가
 // - [✅] 메뉴 이름을 입력 받고 확인 버튼 누르면 메뉴가 추가된다.
@@ -23,8 +23,6 @@
 // 코드 작성 후 리팩터링 => 코드 중복을 줄이고 가독성을 높여준다.
 // 리팩터링 후 코드 정상 작동하는지 꼭 확인 => 테스트 코드 활용
 
-const $ = (selector) => document.querySelector(selector);
-
 // 🎯 step2 요구사항 - 상태 관리로 메뉴 관리하기
 
 // TODO localStorage Read & Write
@@ -46,10 +44,6 @@ const $ = (selector) => document.querySelector(selector);
 // - [✅] 페이지에 최초 로딩시 localStorage의 에스프레소 메뉴를 읽어온다.
 // - [✅] 에스프레소 메뉴를 페이지에 보여준다.
 
-// 🙌🏼 추가하고 싶은 기능
-// - [ ] 새로고침시 원래 보던 페이지 보여주는 기능
-// - [ ] 카테고리 추가 / 삭제 기능
-
 // TODO 품절 관리
 // - [✅] 품절 상태인 경우를 보여줄 수 있게, 품절 버튼을 추가한다.
 // - [✅] 품절 버튼을 누르면 `sold-out` class를 추가하여 상태를 변경한다.
@@ -57,14 +51,12 @@ const $ = (selector) => document.querySelector(selector);
 // - [✅] 품절 상태에서 버튼을 다시 한번 누르면 `sold-out` class가 제거된다.
 // - [✅] 품절 상태에서 버튼을 다시 한번 누르면 localStorage에 상태값이 저장된다.
 
-const store = {
-  setLocalStrage(menu) {
-    localStorage.setItem("menu", JSON.stringify(menu));
-  },
-  getLocalStorage() {
-    return JSON.parse(localStorage.getItem("menu"));
-  },
-};
+// 🙌🏼 추가하고 싶은 기능
+// - [ ] 새로고침시 원래 보던 페이지를 사용자에게 보여주는 기능
+// - [ ] 카테고리 추가 / 삭제 기능
+
+import { $ } from "./utils/dom.js";
+import store from "./store/index.js";
 
 function App() {
   // 상태(= 변하는 데이터) - 메뉴명
@@ -82,6 +74,7 @@ function App() {
       this.menu = store.getLocalStorage();
     }
     renderMenu();
+    initEventListeners();
   };
 
   const renderMenu = () => {
@@ -117,10 +110,10 @@ function App() {
     updateMenuCount();
   };
 
-  function updateMenuCount() {
-    const menuCount = $("#menu-list").querySelectorAll("li").length;
+  const updateMenuCount = () => {
+    const menuCount = this.menu[this.currentCategory].length;
     $(".menu-count").innerText = `총 ${menuCount}개`;
-  }
+  };
 
   const addMenuName = () => {
     if ($("#menu-name").value === "") {
@@ -147,7 +140,7 @@ function App() {
     this.menu[this.currentCategory][menuId].name = editedMenuName;
     store.setLocalStrage(this.menu);
     // 입력한 이름으로 수정 완료
-    $menuName.innerText = editedMenuName;
+    renderMenu();
   };
 
   const removeMenu = (e) => {
@@ -155,8 +148,7 @@ function App() {
       const menuId = e.target.closest("li").dataset.menuId;
       this.menu[this.currentCategory].splice(menuId, 1);
       store.setLocalStrage(this.menu);
-      e.target.closest("li").remove();
-      updateMenuCount(e);
+      renderMenu();
     }
   };
 
@@ -168,48 +160,50 @@ function App() {
     renderMenu();
   };
 
-  // event 위임
-  $("#menu-list").addEventListener("click", (e) => {
-    if (e.target.classList.contains("menu-edit-button")) {
-      editMenuName(e);
-      // 뒷 부분과 관련없이 실행되는 함수가 연속으로 있을 때 return을 해주어 불필요한 연산을 줄여줌.
-      return;
-    }
+  const initEventListeners = () => {
+    // event 위임
+    $("#menu-list").addEventListener("click", (e) => {
+      if (e.target.classList.contains("menu-edit-button")) {
+        editMenuName(e);
+        // 뒷 부분과 관련없이 실행되는 함수가 연속으로 있을 때 return을 해주어 불필요한 연산을 줄여줌.
+        return;
+      }
 
-    if (e.target.classList.contains("menu-remove-button")) {
-      removeMenu(e);
-      return;
-    }
+      if (e.target.classList.contains("menu-remove-button")) {
+        removeMenu(e);
+        return;
+      }
 
-    if (e.target.classList.contains("menu-sold-out-button")) {
-      soldOutMenu(e);
-      return;
-    }
-  });
+      if (e.target.classList.contains("menu-sold-out-button")) {
+        soldOutMenu(e);
+        return;
+      }
+    });
 
-  $("#menu-form").addEventListener("submit", (e) => {
-    e.preventDefault();
-  });
+    $("#menu-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+    });
 
-  $("#menu-submit-button").addEventListener("click", addMenuName);
+    $("#menu-submit-button").addEventListener("click", addMenuName);
 
-  // 'Enter'키가 아닌 다른 키를 눌렀을 때 alert 뜨는 것 방지
-  $("#menu-name").addEventListener("keypress", (e) => {
-    if (e.key !== "Enter") {
-      return;
-    }
-    addMenuName();
-  });
+    // 'Enter'키가 아닌 다른 키를 눌렀을 때 alert 뜨는 것 방지
+    $("#menu-name").addEventListener("keypress", (e) => {
+      if (e.key !== "Enter") {
+        return;
+      }
+      addMenuName();
+    });
 
-  $("nav").addEventListener("click", (e) => {
-    const isCategoryBtn = e.target.classList.contains("cafe-category-name");
-    if (isCategoryBtn) {
-      const categoryName = e.target.dataset.categoryName;
-      this.currentCategory = categoryName;
-      $("#category-title").innerText = `${e.target.innerText} 메뉴 관리`;
-      renderMenu();
-    }
-  });
+    $("nav").addEventListener("click", (e) => {
+      const isCategoryBtn = e.target.classList.contains("cafe-category-name");
+      if (isCategoryBtn) {
+        const categoryName = e.target.dataset.categoryName;
+        this.currentCategory = categoryName;
+        $("#category-title").innerText = `${e.target.innerText} 메뉴 관리`;
+        renderMenu();
+      }
+    });
+  };
 }
 
 const app = new App();
