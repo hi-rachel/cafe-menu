@@ -25,11 +25,90 @@
 
 const $ = (selector) => document.querySelector(selector);
 
+// 🎯 step2 요구사항 - 상태 관리로 메뉴 관리하기
+
+// TODO localStorage Read & Write
+// - [✅] localStorage에 데이터를 저장한다.
+// - [✅] 메뉴를 추가할 때 데이터를 저장한다.
+// - [✅] 메뉴를 수정할 때 데이터를 저장한다.
+// - [✅] 메뉴를 삭제할 때 데이터를 저장한다.
+// - [✅] localStorage에 있는 데이터를 읽어온다.
+//(https://developer.mozilla.org/ko/docs/Web/API/Window/localStorage)
+
+// TODO 카테고리별 메뉴판 관리
+// - [✅] 에스프레소 메뉴판 관리
+// - [ ] 프라푸치노 메뉴판 관리
+// - [ ] 블렌디드 메뉴판 관리
+// - [ ] 티바나 메뉴판 관리
+// - [ ] 디저트 메뉴판 관리 (각각의 종류별로 관리할 수 있게 만든다.)
+
+// TODO 페이지 접근시 최초 데이터 Read & Rendering
+// - [ ] 페이지에 최초 로딩시 localStorage의 에스프레소 메뉴를 읽어온다.
+// - [ ] 에스프레소 메뉴를 페이지에 보여준다.
+
+// TODO 품절 관리
+// - [ ] 품절 상태인 경우를 보여줄 수 있게, 품절 버튼을 추가한다.
+// - [ ] 품절 버튼을 누르면 `sold-out` class를 추가하여 상태를 변경한다.
+// - [ ] 품절 버튼을 누르면 localStorage에 상태값이 저장된다.
+// - [ ] 품절 상태에서 버튼을 다시 한번 누르면 `sold-out` class가 제거된다.
+// - [ ] 품절 상태에서 버튼을 다시 한번 누르면 localStorage에 상태값이 저장된다.
+
+const store = {
+  setLocalStrage(menu) {
+    localStorage.setItem("menu", JSON.stringify(menu));
+  },
+  getLocalStorage() {
+    return JSON.parse(localStorage.getItem("menu"));
+  },
+};
+
 function App() {
-  const updateMenuCount = () => {
+  // 상태(= 변하는 데이터) - 메뉴명
+  // 초기화 + 데이터 형태 선언(배열)
+  this.menu = {
+    espresso: [],
+    frappuccino: [],
+    blended: [],
+    teavana: [],
+    desert: [],
+  };
+  this.currentCategory = "espresso";
+  this.init = () => {
+    if (store.getLocalStorage()) {
+      this.menu = store.getLocalStorage();
+    }
+    renderMenu();
+  };
+
+  const renderMenu = () => {
+    const template = this.menu[this.currentCategory]
+      .map((item, index) => {
+        return `<li data-menu-id="${index}" class="menu-list-item d-flex items-center py-2">
+        <span class="w-100 pl-2 menu-name">${item.name}</span>
+        <button
+            type="button"
+            class="bg-gray-50 text-gray-500 text-sm mr-1 menu-edit-button"
+        >
+            수정
+        </button>
+        <button
+            type="button"
+            class="bg-gray-50 text-gray-500 text-sm menu-remove-button"
+        >
+            삭제
+        </button>
+        </li>`;
+      })
+      .join("");
+
+    $("#espresso-menu-list").innerHTML = template;
+    updateMenuCount();
+  };
+
+  function updateMenuCount() {
     const menuCount = $("#espresso-menu-list").querySelectorAll("li").length;
     $(".menu-count").innerText = `총 ${menuCount}개`;
-  };
+  }
 
   const addMenuName = () => {
     if ($("#espresso-menu-name").value === "") {
@@ -37,32 +116,15 @@ function App() {
       return;
     }
     const espressoMenuName = $("#espresso-menu-name").value;
-    const menuItemTemplate = (espressoMenuName) => {
-      return `<li class="menu-list-item d-flex items-center py-2">
-            <span class="w-100 pl-2 menu-name">${espressoMenuName}</span>
-            <button
-                type="button"
-                class="bg-gray-50 text-gray-500 text-sm mr-1 menu-edit-button"
-            >
-                수정
-            </button>
-            <button
-                type="button"
-                class="bg-gray-50 text-gray-500 text-sm menu-remove-button"
-            >
-                삭제
-            </button>
-            </li>`;
-    };
-    $("#espresso-menu-list").insertAdjacentHTML(
-      "beforeend",
-      menuItemTemplate(espressoMenuName)
-    );
-    updateMenuCount();
+    this.menu[this.currentCategory].push({ name: espressoMenuName });
+    store.setLocalStrage(this.menu);
+    renderMenu();
     $("#espresso-menu-name").value = "";
   };
 
   const editMenuName = (e) => {
+    const menuId = e.target.closest("li").dataset.menuId;
+
     // closest라는 메서드를 이용해서 클릭한 수정버튼에 가장 가까운 li 태그를 찾음 +
     // element 안의 text의 값을 가져오는 innerText 메서드 사용
     // 반복 사용하는 코드 변수명 앞에 $붙이고 따로 만들어줘 훨씬 더 간결한 코드 작성.
@@ -71,12 +133,17 @@ function App() {
       "수정하고 싶은 메뉴 이름을 입력해주세요.",
       $menuName.innerText
     );
+    this.menu[menuId].name = editedMenuName;
+    store.setLocalStrage(this.menu);
     // 입력한 이름으로 수정 완료
     $menuName.innerText = editedMenuName;
   };
 
   const removeMenu = (e) => {
     if (confirm("정말 삭제하시겠습니까?")) {
+      const menuId = e.target.closest("li").dataset.menuId;
+      this.menu.splice(menuId, 1);
+      store.setLocalStrage(this.menu);
       e.target.closest("li").remove();
       updateMenuCount(e);
     }
@@ -106,31 +173,16 @@ function App() {
     }
     addMenuName();
   });
+
+  $("nav").addEventListener("click", (e) => {
+    const isCategoryBtn = e.target.classList.contains("cafe-category-name");
+    if (isCategoryBtn) {
+      const categoryName = e.target.dataset.categoryName;
+      console.log(categoryName);
+    }
+  });
 }
 
-App();
-
-// 🎯 step2 요구사항 - 상태 관리로 메뉴 관리하기
-
-// TODO localStorage Read & Write
-// - [ ] localStorage에 데이터를 저장한다.
-// - [ ] localStorage에 있는 데이터를 읽어온다.
-//(https://developer.mozilla.org/ko/docs/Web/API/Window/localStorage)
-
-// TODO 카테고리별 메뉴판 관리
-// - [ ] 에스프레소 메뉴판 관리
-// - [ ] 프라푸치노 메뉴판 관리
-// - [ ] 블렌디드 메뉴판 관리
-// - [ ] 티바나 메뉴판 관리
-// - [ ] 디저트 메뉴판 관리 (각각의 종류별로 관리할 수 있게 만든다.)
-
-// TODO 페이지 접근시 최초 데이터 Read & Rendering
-// - [ ] 페이지에 최초 로딩시 localStorage의 에스프레소 메뉴를 읽어온다.
-// - [ ] 에스프레소 메뉴를 페이지에 보여준다.
-
-// TODO 품절 관리
-// - [ ] 품절 상태인 경우를 보여줄 수 있게, 품절 버튼을 추가한다.
-// - [ ] 품절 버튼을 누르면 `sold-out` class를 추가하여 상태를 변경한다.
-// - [ ] 품절 버튼을 누르면 localStorage에 상태값이 저장된다.
-// - [ ] 품절 상태에서 버튼을 다시 한번 누르면 `sold-out` class가 제거된다.
-// - [ ] 품절 상태에서 버튼을 다시 한번 누르면 localStorage에 상태값이 저장된다.
+const app = new App();
+app.init();
+// new 키워드를 사용하여 생성자 함수를 호출하게 되면 이때의 this는 "만들어질 객체"를 참조한다.
