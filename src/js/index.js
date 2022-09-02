@@ -51,11 +51,11 @@ const $ = (selector) => document.querySelector(selector);
 // - [ ] 카테고리 추가 / 삭제 기능
 
 // TODO 품절 관리
-// - [ ] 품절 상태인 경우를 보여줄 수 있게, 품절 버튼을 추가한다.
-// - [ ] 품절 버튼을 누르면 `sold-out` class를 추가하여 상태를 변경한다.
-// - [ ] 품절 버튼을 누르면 localStorage에 상태값이 저장된다.
-// - [ ] 품절 상태에서 버튼을 다시 한번 누르면 `sold-out` class가 제거된다.
-// - [ ] 품절 상태에서 버튼을 다시 한번 누르면 localStorage에 상태값이 저장된다.
+// - [✅] 품절 상태인 경우를 보여줄 수 있게, 품절 버튼을 추가한다.
+// - [✅] 품절 버튼을 누르면 `sold-out` class를 추가하여 상태를 변경한다.
+// - [✅] 품절 버튼을 누르면 localStorage에 상태값이 저장된다.
+// - [✅] 품절 상태에서 버튼을 다시 한번 누르면 `sold-out` class가 제거된다.
+// - [✅] 품절 상태에서 버튼을 다시 한번 누르면 localStorage에 상태값이 저장된다.
 
 const store = {
   setLocalStrage(menu) {
@@ -88,7 +88,15 @@ function App() {
     const template = this.menu[this.currentCategory]
       .map((item, index) => {
         return `<li data-menu-id="${index}" class="menu-list-item d-flex items-center py-2">
-        <span class="w-100 pl-2 menu-name">${item.name}</span>
+        <span class="w-100 pl-2 menu-name ${item.soldOut ? "sold-out" : ""}">${
+          item.name
+        }</span>
+          <button
+    type="button"
+    class="bg-gray-50 text-gray-500 text-sm mr-1 menu-sold-out-button"
+  >
+    품절
+  </button>
         <button
             type="button"
             class="bg-gray-50 text-gray-500 text-sm mr-1 menu-edit-button"
@@ -152,14 +160,30 @@ function App() {
     }
   };
 
+  const soldOutMenu = (e) => {
+    const menuId = e.target.closest("li").dataset.menuId;
+    this.menu[this.currentCategory][menuId].soldOut =
+      !this.menu[this.currentCategory][menuId].soldOut;
+    store.setLocalStrage(this.menu);
+    renderMenu();
+  };
+
   // event 위임
   $("#menu-list").addEventListener("click", (e) => {
     if (e.target.classList.contains("menu-edit-button")) {
       editMenuName(e);
+      // 뒷 부분과 관련없이 실행되는 함수가 연속으로 있을 때 return을 해주어 불필요한 연산을 줄여줌.
+      return;
     }
 
     if (e.target.classList.contains("menu-remove-button")) {
       removeMenu(e);
+      return;
+    }
+
+    if (e.target.classList.contains("menu-sold-out-button")) {
+      soldOutMenu(e);
+      return;
     }
   });
 
