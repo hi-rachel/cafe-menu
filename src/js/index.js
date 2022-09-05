@@ -58,10 +58,10 @@
 // ## 🎯 step3 요구사항 - 서버와의 통신을 통해 메뉴 관리하기
 
 // TODO 서버 요청 부분
-// - [ ] [링크](https://github.com/blackcoffee-study/moonbucks-menu-server)에 있는 웹 서버 저장소를 clone하여 로컬에서 웹 서버를 실행시킨다.
-// - [ ] 웹 서버를 띄운다.
-// - [ ] 서버에 새로운 메뉴명이 추가될 수 있도록 요청한다.
-// - [ ] 서버에 카테고리별 메뉴리스트를 요청한다.
+// - [✅] [링크](https://github.com/blackcoffee-study/moonbucks-menu-server)에 있는 웹 서버 저장소를 clone하여 로컬에서 웹 서버를 실행시킨다.
+// - [✅] 웹 서버를 띄운다.
+// - [✅] 서버에 새로운 메뉴명이 추가될 수 있도록 요청한다.
+// - [✅] 서버에 카테고리별 메뉴리스트를 요청한다.
 // - [ ] 서버에 메뉴 이름이 수정될 수 있도록 요청한다.
 // - [ ] 서버에 메뉴의 품절 상태를 토글 될 수 있도록 요청한다.
 // - [ ] 서버에 메뉴가 삭제 될 수 있도록 요청한다.
@@ -77,6 +77,15 @@
 import { $ } from "./utils/dom.js";
 import store from "./store/index.js";
 
+const BASE_URL = "http://localhost:3000/api";
+
+const MenuApi = {
+  async getAllMenuByCategory(category) {
+    const response = await fetch(`${BASE_URL}/category/${category}/menu`);
+    return response.json();
+  },
+};
+
 function App() {
   // 상태(= 변하는 데이터) - 메뉴명
   // 초기화 + 데이터 형태 선언(배열)
@@ -88,10 +97,11 @@ function App() {
     desert: [],
   };
   this.currentCategory = "espresso";
-  this.init = () => {
-    if (store.getLocalStorage()) {
-      this.menu = store.getLocalStorage();
-    }
+
+  this.init = async () => {
+    this.menu[this.currentCategory] = await MenuApi.getAllMenuByCategory(
+      this.currentCategory
+    );
     renderMenu();
     initEventListeners();
   };
@@ -134,14 +144,26 @@ function App() {
     $(".menu-count").innerText = `총 ${menuCount}개`;
   };
 
-  const addMenuName = () => {
+  const addMenuName = async () => {
     if ($("#menu-name").value === "") {
       alert("메뉴 이름을 입력해주세요.");
       return;
     }
     const menuName = $("#menu-name").value;
-    this.menu[this.currentCategory].push({ name: menuName });
-    store.setLocalStrage(this.menu);
+
+    await fetch(`${BASE_URL}/category/${this.currentCategory}/menu`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name: menuName }),
+    }).then((respone) => {
+      return respone.json();
+    });
+
+    this.menu[this.currentCategory] = await MenuApi.getAllMenuByCategory(
+      this.currentCategory
+    );
     renderMenu();
     $("#menu-name").value = "";
   };
