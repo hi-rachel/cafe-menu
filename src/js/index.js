@@ -96,6 +96,22 @@ const MenuApi = {
       console.error(response);
     }
   },
+  async editMenu(category, name, menuId) {
+    const response = await fetch(
+      `${BASE_URL}/category/${category}/menu/${menuId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name }),
+      }
+    );
+    if (!response.ok) {
+      console.error(response);
+    }
+    return response.json();
+  },
 };
 
 function App() {
@@ -121,7 +137,9 @@ function App() {
   const renderMenu = () => {
     const template = this.menu[this.currentCategory]
       .map((item, index) => {
-        return `<li data-menu-id="${index}" class="menu-list-item d-flex items-center py-2">
+        return `<li data-menu-id="${
+          item.id
+        }" class="menu-list-item d-flex items-center py-2">
         <span class="w-100 pl-2 menu-name ${item.soldOut ? "sold-out" : ""}">${
           item.name
         }</span>
@@ -170,19 +188,17 @@ function App() {
     $("#menu-name").value = "";
   };
 
-  const editMenuName = (e) => {
+  const editMenuName = async (e) => {
     const menuId = e.target.closest("li").dataset.menuId;
-    // closest라는 메서드를 이용해서 클릭한 수정버튼에 가장 가까운 li 태그를 찾음 +
-    // element 안의 text의 값을 가져오는 innerText 메서드 사용
-    // 반복 사용하는 코드 변수명 앞에 $붙이고 따로 만들어줘 훨씬 더 간결한 코드 작성.
     const $menuName = e.target.closest("li").querySelector(".menu-name");
     const editedMenuName = prompt(
       "수정하고 싶은 메뉴 이름을 입력해주세요.",
       $menuName.innerText
     );
-    this.menu[this.currentCategory][menuId].name = editedMenuName;
-    store.setLocalStrage(this.menu);
-    // 입력한 이름으로 수정 완료
+    await MenuApi.editMenu(this.currentCategory, editedMenuName, menuId);
+    this.menu[this.currentCategory] = await MenuApi.getAllMenuByCategory(
+      this.currentCategory
+    );
     renderMenu();
   };
 
