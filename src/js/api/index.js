@@ -1,5 +1,3 @@
-// 메뉴명 두글자 이상 쓰라고 알려주기
-
 const BASE_URL = "http://localhost:3000/api";
 
 const HTTP_METHOD = {
@@ -57,10 +55,13 @@ const MenuApi = {
     );
   },
   async editMenu(category, name, menuId) {
-    return request(
-      `${BASE_URL}/category/${category}/menu/${menuId}`,
-      HTTP_METHOD.PUT({ name })
-    );
+    if (name.length > 1) {
+      return request(
+        `${BASE_URL}/category/${category}/menu/${menuId}`,
+        HTTP_METHOD.PUT({ name })
+      );
+    }
+    alert("메뉴명은 2글자 이상으로 입력해주세요.");
   },
   async toggleSoldOutMenu(category, menuId) {
     return request(
